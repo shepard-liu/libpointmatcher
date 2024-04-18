@@ -1,5 +1,10 @@
 cmake_minimum_required(VERSION 2.8.11)
 
+option(BUILD_EXAMPLES "Build examples" OFF)
+option(BUILD_TESTS "Build tests" OFF)
+option(BUILD_EVALUATIONS "Build evaluations" OFF)
+option(ENABLE_BOOST_DYN_LINKING "Enable dynamic linking of boost libraries" OFF)
+
 include(CheckSymbolExists)
 
 #========================
@@ -66,11 +71,19 @@ if (NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
   add_definitions(-O3)
 endif(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
 
+
+
 # For Windows
 if( MSVC )
+	add_definitions( /D BOOST_TIMER_ENABLE_DEPRECATED)
+	if(ENABLE_BOOST_DYN_LINKING)
+		add_definitions( /D BOOST_ALL_DYN_LINK)
+	endif()
 	add_definitions( /D _VARIADIC_MAX=10 ) # VS2012 does not support tuples correctly yet
 	add_definitions( /D _USE_MATH_DEFINES) # defines M_PI for Visual Studio
 	add_definitions( /D _ENABLE_EXTENDED_ALIGNED_STORAGE) # this variable must be defined with VS2017 to acknowledge alignment changes of aligned_storage
+else()
+	add_definitions( -D BOOST_TIMER_ENABLE_DEPRECATED)
 endif()
 
 #======================= installation =====================================
@@ -432,12 +445,17 @@ endif(GENERATE_API_DOC)
 #=============== trigger other makefile ======================
 
 # Example programs
-add_subdirectory(examples)
+if(BUILD_EXAMPLES)
+	add_subdirectory(examples)
+endif()
 # Evaluation programs
-add_subdirectory(evaluations)
+if(BUILD_EVALUATIONS)
+	add_subdirectory(evaluations)
+endif()
 # Unit testing
-add_subdirectory(utest)
-
+if(BUILD_TESTS)
+	add_subdirectory(utest)
+endif()
 
 #=================== allow find_package() =========================
 #

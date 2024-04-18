@@ -1,7 +1,8 @@
 add_executable(pmicp icp.cpp)
 target_link_libraries(pmicp pointmatcher)
-install(TARGETS pmicp RUNTIME DESTINATION bin)
-
+if(BUILD_EXAMPLES)
+    install(TARGETS pmicp RUNTIME DESTINATION bin)
+endif()
 add_executable(icp_simple icp_simple.cpp)
 target_link_libraries(icp_simple pointmatcher)
 
