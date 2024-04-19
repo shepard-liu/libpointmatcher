@@ -128,12 +128,17 @@ add_subdirectory(contrib)
 #--------------------
 # DEPENDENCY:  boost
 #--------------------
+if(NOT ENABLE_BOOST_DYN_LINKING)
+	set(Boost_USE_STATIC_LIBS ON)
+endif()
+
 find_package(Boost COMPONENTS thread filesystem system program_options date_time REQUIRED)
 if (Boost_MINOR_VERSION GREATER 47)
 	find_package(Boost COMPONENTS thread filesystem system program_options date_time chrono REQUIRED)
 endif (Boost_MINOR_VERSION GREATER 47)
 include_directories(${Boost_INCLUDE_DIRS})
 set(EXTERNAL_LIBS ${EXTERNAL_LIBS} ${Boost_LIBRARIES})
+message(STATUS "boost_libs: ${Boost_LIBRARIES}")
 
 
 #--------------------
