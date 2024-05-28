@@ -1,5 +1,10 @@
 cmake_minimum_required(VERSION 2.8.11)
 
+option(BUILD_EXAMPLES "Build examples" OFF)
+option(BUILD_TESTS "Build tests" OFF)
+option(BUILD_EVALUATIONS "Build evaluations" OFF)
+option(ENABLE_BOOST_DYN_LINKING "Enable dynamic linking of boost libraries" OFF)
+
 include(CheckSymbolExists)
 
 #========================
@@ -66,11 +71,19 @@ if (NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
   add_definitions(-O3)
 endif(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
 
+
+
 # For Windows
 if( MSVC )
+	add_definitions( /D BOOST_TIMER_ENABLE_DEPRECATED)
+	if(ENABLE_BOOST_DYN_LINKING)
+		add_definitions( /D BOOST_ALL_DYN_LINK)
+	endif()
 	add_definitions( /D _VARIADIC_MAX=10 ) # VS2012 does not support tuples correctly yet
 	add_definitions( /D _USE_MATH_DEFINES) # defines M_PI for Visual Studio
 	add_definitions( /D _ENABLE_EXTENDED_ALIGNED_STORAGE) # this variable must be defined with VS2017 to acknowledge alignment changes of aligned_storage
+else()
+	add_definitions( -D BOOST_TIMER_ENABLE_DEPRECATED)
 endif()
 
 #======================= installation =====================================
@@ -115,12 +128,17 @@ add_subdirectory(contrib)
 #--------------------
 # DEPENDENCY:  boost
 #--------------------
+if(NOT ENABLE_BOOST_DYN_LINKING)
+	set(Boost_USE_STATIC_LIBS ON)
+endif()
+
 find_package(Boost COMPONENTS thread filesystem system program_options date_time REQUIRED)
 if (Boost_MINOR_VERSION GREATER 47)
 	find_package(Boost COMPONENTS thread filesystem system program_options date_time chrono REQUIRED)
 endif (Boost_MINOR_VERSION GREATER 47)
 include_directories(${Boost_INCLUDE_DIRS})
 set(EXTERNAL_LIBS ${EXTERNAL_LIBS} ${Boost_LIBRARIES})
+message(STATUS "boost_libs: ${Boost_LIBRARIES}")
 
 
 #--------------------
@@ -375,15 +393,15 @@ target_include_directories(pointmatcher PRIVATE ${CMAKE_SOURCE_DIR}/pointmatcher
 target_include_directories(pointmatcher PRIVATE ${CMAKE_SOURCE_DIR}/pointmatcher/DataPointsFilters)
 target_include_directories(pointmatcher PRIVATE ${CMAKE_SOURCE_DIR}/pointmatcher/DataPointsFilters/utils)
 
-if(MSVC)
-	# MSVC has a limit of 64k for the number of sections in an object file
-	target_compile_options(pointmatcher PRIVATE /bigobj)
-endif(MSVC)
-
 # link all libraries to libpointmatcher
 add_definitions(-Wall)
 #target_link_libraries(pointmatcher ${yaml-cpp_LIBRARIES} ${libnabo_LIBRARIES})
 target_link_libraries(pointmatcher ${EXTERNAL_LIBS})
+
+if(MSVC AND CMAKE_BUILD_TYPE STREQUAL "Debug")
+	# MSVC has a limit of 64k for the number of sections in an object file
+	target_compile_options(pointmatcher PRIVATE /bigobj)
+endif(MSVC)
 
 if(EXTRA_DEPS)
 	add_dependencies(pointmatcher ${EXTRA_DEPS})
@@ -437,12 +455,17 @@ endif(GENERATE_API_DOC)
 #=============== trigger other makefile ======================
 
 # Example programs
-add_subdirectory(examples)
+if(BUILD_EXAMPLES)
+	add_subdirectory(examples)
+endif()
 # Evaluation programs
-add_subdirectory(evaluations)
+if(BUILD_EVALUATIONS)
+	add_subdirectory(evaluations)
+endif()
 # Unit testing
-add_subdirectory(utest)
-
+if(BUILD_TESTS)
+	add_subdirectory(utest)
+endif()
 
 #=================== allow find_package() =========================
 #
