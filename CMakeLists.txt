@@ -375,6 +375,11 @@ target_include_directories(pointmatcher PRIVATE ${CMAKE_SOURCE_DIR}/pointmatcher
 target_include_directories(pointmatcher PRIVATE ${CMAKE_SOURCE_DIR}/pointmatcher/DataPointsFilters)
 target_include_directories(pointmatcher PRIVATE ${CMAKE_SOURCE_DIR}/pointmatcher/DataPointsFilters/utils)
 
+if(MSVC)
+	# MSVC has a limit of 64k for the number of sections in an object file
+	target_compile_options(pointmatcher PRIVATE /bigobj)
+endif(MSVC)
+
 # link all libraries to libpointmatcher
 add_definitions(-Wall)
 #target_link_libraries(pointmatcher ${yaml-cpp_LIBRARIES} ${libnabo_LIBRARIES})
